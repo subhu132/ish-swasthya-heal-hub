@@ -1,138 +1,193 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-import google.generativeai as genai
-from supabase import create_client, Client
-from datetime import datetime
-import os
-from typing import Dict, Any
-import uuid
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Card } from "@/components/ui/card";
+import { Navigation } from "@/components/Navigation";
+import { FloatingHealthIcons } from "@/components/FloatingHealthIcons";
+import { Send } from "lucide-react";
 
-app = Flask(__name__)
-CORS(app)
+// ✅ Set your backend URL in Vercel environment variables
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-# Initialize Gemini API
-genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
-model = genai.GenerativeModel('gemini-pro')
+const languages = [
+  { code: "en", name: "English", native: "English" },
+  { code: "hi", name: "Hindi", native: "हिंदी" },
+  { code: "bn", name: "Bengali", native: "বাংলা" },
+  { code: "ta", name: "Tamil", native: "தமிழ்" },
+  { code: "te", name: "Telugu", native: "తెలుగు" },
+  { code: "mr", name: "Marathi", native: "मराठी" },
+  { code: "gu", name: "Gujarati", native: "ગુજરાતી" },
+  { code: "kn", name: "Kannada", native: "ಕನ್ನಡ" },
+];
 
-# Initialize Supabase client
-supabase: Client = create_client(
-    os.environ.get('SUPABASE_URL'),
-    os.environ.get('SUPABASE_ANON_KEY')
-)
+interface Message {
+  id: string;
+  text: string;
+  type: "user" | "bot";
+  timestamp: Date;
+}
 
-# ISH System Prompt
-SYSTEM_PROMPT = """You are ISH (Innovatrix Health Bot), an AI-driven public health assistant.
+const Chat = () => {
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("");
+  const [showLanguageModal, setShowLanguageModal] = useState(true);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputMessage, setInputMessage] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
 
-🎯 Goals:
-- Educate rural and semi-urban populations about preventive healthcare, common diseases, vaccination, nutrition
-- Provide real-time health information when available
-- Be concise, clear, and culturally sensitive
-- Use simple language for low literacy audiences
-- Always respond in the user's selected language
+  const handleLanguageSelect = (language: string) => {
+    setSelectedLanguage(language);
+    setShowLanguageModal(false);
 
-🧭 Guidelines:
-1. Keep responses short (2-4 sentences max)
-2. If uncertain, say: "Please check with a local health worker for confirmation"
-3. Never give harmful advice
-4. For emergencies (chest pain, high fever, breathing issues): "Visit nearest hospital or call emergency immediately"
-5. Include actionable tips (wash hands, drink clean water, use mosquito nets)
-6. Maintain friendly, caring, trustworthy tone
+    // Welcome message
+    const welcomeMessage: Message = {
+      id: Date.now().toString(),
+      text: "Hello! I'm your health assistant. How can I help you today?",
+      type: "bot",
+      timestamp: new Date(),
+    };
+    setMessages([welcomeMessage]);
+  };
 
-Language: {lang}
-User Message: {message}
+  const sendMessage = async () => {
+    if (!inputMessage.trim()) return;
 
-Respond appropriately in the specified language."""
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: inputMessage,
+      type: "user",
+      timestamp: new Date(),
+    };
 
-@app.route('/chat', methods=['POST'])
-def chat():
-    """
-    Handle chat requests with ISH bot
-    Input: {"message": string, "lang": string}
-    Output: {"reply": string, "session_id": string, "status": string}
-    """
-    try:
-        # Extract request data
-        data = request.get_json()
-        
-        # Validate input
-        if not data or 'message' not in data or 'lang' not in data:
-            return jsonify({
-                'error': 'Missing required fields: message and lang',
-                'status': 'error'
-            }), 400
-        
-        user_message = data['message']
-        language = data['lang']
-        
-        # Get or create session ID (for tracking conversation threads)
-        session_id = data.get('session_id', str(uuid.uuid4()))
-        
-        # Prepare prompt with system instructions
-        full_prompt = SYSTEM_PROMPT.format(
-            lang=language,
-            message=user_message
-        )
-        
-        # Generate response from Gemini
-        try:
-            response = model.generate_content(full_prompt)
-            bot_reply = response.text
-        except Exception as gemini_error:
-            # Fallback response if Gemini fails
-            bot_reply = "I'm having trouble connecting right now. Please try again or contact a health worker."
-            print(f"Gemini API Error: {gemini_error}")
-        
-        # Save to Supabase - chat history table
-        chat_record = {
-            'session_id': session_id,
-            'user_message': user_message,
-            'bot_reply': bot_reply,
-            'language': language,
-            'created_at': datetime.utcnow().isoformat(),
-            'metadata': {
-                'ip': request.remote_addr,
-                'user_agent': request.headers.get('User-Agent', 'Unknown')
-            }
-        }
-        
-        try:
-            # Insert chat record into Supabase
-            supabase.table('chat_history').insert(chat_record).execute()
-        except Exception as db_error:
-            # Log error but don't fail the request
-            print(f"Database Error: {db_error}")
-            # Continue without saving if DB fails
-        
-        # Return successful response
-        return jsonify({
-            'reply': bot_reply,
-            'session_id': session_id,
-            'status': 'success'
-        }), 200
-        
-    except Exception as e:
-        # Handle unexpected errors
-        print(f"Unexpected Error: {e}")
-        return jsonify({
-            'error': 'An unexpected error occurred',
-            'status': 'error'
-        }), 500
+    setMessages((prev) => [...prev, userMessage]);
+    setInputMessage("");
+    setIsTyping(true);
 
-@app.route('/health', methods=['GET'])
-def health_check():
-    """API health check endpoint"""
-    return jsonify({'status': 'healthy', 'service': 'ISH Bot API'}), 200
+    try {
+      const response = await fetch(`${API_URL}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: userMessage.text,
+          lang: selectedLanguage,
+        }),
+      });
 
-@app.errorhandler(404)
-def not_found(error):
-    """Handle 404 errors"""
-    return jsonify({'error': 'Endpoint not found', 'status': 'error'}), 404
+      if (!response.ok) throw new Error("Server error");
 
-@app.errorhandler(500)
-def internal_error(error):
-    """Handle 500 errors"""
-    return jsonify({'error': 'Internal server error', 'status': 'error'}), 500
+      const data = await response.json();
 
-if __name__ == '__main__':
-    # Run in production with gunicorn instead
-    app.run(debug=False, host='0.0.0.0', port=5000)
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: data.reply || "Sorry, I couldn't process your request.",
+        type: "bot",
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (err) {
+      console.error(err);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: "Sorry, I'm having trouble connecting to the server. Please try again later.",
+        type: "bot",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen relative">
+      <FloatingHealthIcons />
+      <Navigation />
+
+      {/* Language Selection Modal */}
+      <Dialog open={showLanguageModal} onOpenChange={setShowLanguageModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center">Choose Your Language</DialogTitle>
+          </DialogHeader>
+          <div className="language-grid grid gap-2">
+            {languages.map((lang) => (
+              <Button
+                key={lang.code}
+                variant="outline"
+                className="language-option flex flex-col p-4 h-auto"
+                onClick={() => handleLanguageSelect(lang.code)}
+              >
+                <span className="font-semibold">{lang.name}</span>
+                <span className="text-sm text-muted-foreground">{lang.native}</span>
+              </Button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Chat Interface */}
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-primary mb-2">Health Assistant Chat</h1>
+          <p className="text-muted-foreground">Get instant answers to your health questions</p>
+        </div>
+
+        {/* Chat Messages */}
+        <Card className="mb-6 p-6 h-96 overflow-y-auto bg-card/80 backdrop-blur-sm">
+          <div className="space-y-4">
+            {messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`flex ${msg.type === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div className={`chat-bubble ${msg.type}`}>
+                  <p>{msg.text}</p>
+                </div>
+              </div>
+            ))}
+
+            {isTyping && (
+              <div className="flex justify-start">
+                <div className="chat-bubble bot flex space-x-1">
+                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-pulse"></div>
+                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-pulse" style={{ animationDelay: "0.2s" }}></div>
+                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-pulse" style={{ animationDelay: "0.4s" }}></div>
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* Message Input */}
+        <div className="flex gap-2">
+          <Input
+            placeholder="Type your health question..."
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+            className="flex-1"
+          />
+          <Button onClick={sendMessage} size="icon" className="shrink-0">
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="mt-6 flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={() => setInputMessage("What are the COVID-19 symptoms?")}>
+            COVID-19 Info
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setInputMessage("When should I get vaccinated?")}>
+            Vaccination Schedule
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setInputMessage("How to prevent dengue?")}>
+            Disease Prevention
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Chat;
