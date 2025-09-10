@@ -2,41 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* ISH Swasthya Connect - Healthcare Design System */
 
 @layer base {
   :root {
+    /* Health-focused color palette */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 210 10% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 210 10% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 210 10% 15%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Health Green - Primary brand color */
+    --primary: 142 76% 36%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 142 76% 50%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Medical Blue - Secondary */
+    --secondary: 217 91% 60%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-glow: 217 91% 70%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Trust Blue - Accent */
+    --accent: 200 100% 95%;
+    --accent-foreground: 210 10% 15%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 210 40% 90%;
+    --input: 210 40% 95%;
+    --ring: 142 76% 36%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+
+    /* Custom healthcare gradients */
+    --gradient-health: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+    --gradient-glow: linear-gradient(135deg, hsl(var(--primary-glow) / 0.2), hsl(var(--secondary-glow) / 0.2));
+    --gradient-background: linear-gradient(135deg, hsl(0 0% 100%), hsl(142 20% 97%), hsl(217 20% 97%));
+
+    /* Healthcare shadows and glows */
+    --shadow-glow: 0 0 30px hsl(var(--primary-glow) / 0.3);
+    --shadow-secondary-glow: 0 0 30px hsl(var(--secondary-glow) / 0.3);
+    --shadow-soft: 0 4px 20px hsl(210 10% 15% / 0.1);
+
+    /* Animation variables */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --animation-float: float 6s ease-in-out infinite;
+    --animation-pulse-glow: pulse-glow 2s ease-in-out infinite alternate;
 
     --sidebar-background: 0 0% 98%;
 
@@ -94,12 +113,161 @@ All colors MUST be HSL.
   }
 }
 
+  }
+}
+
+/* Healthcare Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-10px) rotate(5deg); }
+  66% { transform: translateY(5px) rotate(-5deg); }
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: var(--shadow-glow); opacity: 0.8; }
+  100% { box-shadow: var(--shadow-secondary-glow); opacity: 1; }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes ticker-scroll {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+@keyframes rotate-tips {
+  0%, 20% { opacity: 1; transform: translateY(0); }
+  25%, 95% { opacity: 0; transform: translateY(-20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
 @layer base {
   * {
     @apply border-border;
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+    background: var(--gradient-background);
+    min-height: 100vh;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-accent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary rounded-full;
+  }
+}
+
+@layer components {
+  /* ISH Logo Glow Effect */
+  .logo-glow {
+    filter: drop-shadow(var(--shadow-glow));
+    transition: var(--transition-smooth);
+  }
+
+  .logo-glow:hover {
+    filter: drop-shadow(var(--shadow-secondary-glow));
+    transform: scale(1.05);
+  }
+
+  /* Team Innovatrix Futuristic Text */
+  .futuristic-text {
+    background: var(--gradient-health);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 20px hsl(var(--primary-glow) / 0.5);
+    animation: pulse-glow 3s ease-in-out infinite alternate;
+  }
+
+  /* Floating Health Icons */
+  .floating-icon {
+    animation: var(--animation-float);
+    opacity: 0.6;
+    position: absolute;
+    z-index: 1;
+  }
+
+  .floating-icon:nth-child(2) { animation-delay: -2s; }
+  .floating-icon:nth-child(3) { animation-delay: -4s; }
+
+  /* Health Tips Rotation */
+  .rotating-tip {
+    animation: rotate-tips 15s infinite;
+  }
+
+  /* Outbreak Ticker */
+  .ticker-content {
+    animation: ticker-scroll 30s linear infinite;
+    white-space: nowrap;
+  }
+
+  /* Chat Bubble Styles */
+  .chat-bubble-user {
+    @apply bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-4 py-2 max-w-xs ml-auto shadow-md;
+  }
+
+  .chat-bubble-bot {
+    @apply bg-card border rounded-2xl rounded-bl-sm px-4 py-2 max-w-xs shadow-md;
+  }
+
+  /* CTA Button with Glow */
+  .cta-glow {
+    background: var(--gradient-health);
+    box-shadow: var(--shadow-glow);
+    transition: var(--transition-smooth);
+  }
+
+  .cta-glow:hover {
+    box-shadow: var(--shadow-secondary-glow);
+    transform: translateY(-2px);
+  }
+
+  /* Loading Spinner */
+  .health-spinner {
+    border: 3px solid hsl(var(--accent));
+    border-top: 3px solid hsl(var(--primary));
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Page Transitions */
+  .page-enter {
+    animation: fade-in-up 0.6s ease-out;
+  }
+
+  /* Mobile-first responsive containers */
+  .health-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Glass morphism effect */
+  .glass {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
   }
 }
