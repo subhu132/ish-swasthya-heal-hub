@@ -1,14 +1,23 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import { Navigation } from "@/components/Navigation";
 import { FloatingHealthIcons } from "@/components/FloatingHealthIcons";
-import { MessageCircle, Send, Plus, User } from "lucide-react";
+import { Send } from "lucide-react";
 
-// ✅ Configure your API URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+// ✅ API URL setup
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (typeof window !== "undefined" ? "http://localhost:5000" : "");
+
+console.log("✅ Using API URL:", API_URL);
 
 const languages = [
   { code: "en", name: "English", native: "English" },
@@ -48,9 +57,12 @@ const Chat = () => {
     setMessages([welcomeMessage]);
   };
 
-  // ✅ Updated sendMessage to read Gemini 2.0-flash responses
   const sendMessage = async () => {
     if (!inputMessage.trim()) return;
+    if (!API_URL) {
+      console.error("❌ No API_URL configured!");
+      return;
+    }
 
     const newMessage: Message = {
       id: Date.now().toString(),
@@ -74,13 +86,12 @@ const Chat = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to get response from server");
+        throw new Error(`Failed with status ${response.status}`);
       }
 
       const data = await response.json();
       console.log("API response:", data);
 
-      // ✅ Extract the actual text from Gemini response
       const botReplyText =
         data.reply?.parts?.[0]?.text?.trim() ||
         "Sorry, I couldn't process your request.";
@@ -118,7 +129,9 @@ const Chat = () => {
       <Dialog open={showLanguageModal} onOpenChange={setShowLanguageModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-center">Choose Your Language</DialogTitle>
+            <DialogTitle className="text-center">
+              Choose Your Language
+            </DialogTitle>
           </DialogHeader>
           <div className="language-grid">
             {languages.map((lang) => (
@@ -129,7 +142,9 @@ const Chat = () => {
                 onClick={() => handleLanguageSelect(lang.code)}
               >
                 <span className="font-semibold">{lang.name}</span>
-                <span className="text-sm text-muted-foreground">{lang.native}</span>
+                <span className="text-sm text-muted-foreground">
+                  {lang.native}
+                </span>
               </Button>
             ))}
           </div>
@@ -139,8 +154,12 @@ const Chat = () => {
       {/* Chat Interface */}
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-primary mb-2">Health Assistant Chat</h1>
-          <p className="text-muted-foreground">Get instant answers to your health questions</p>
+          <h1 className="text-3xl font-bold text-primary mb-2">
+            Health Assistant Chat
+          </h1>
+          <p className="text-muted-foreground">
+            Get instant answers to your health questions
+          </p>
         </div>
 
         {/* Chat Messages */}
@@ -149,7 +168,9 @@ const Chat = () => {
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
+                className={`flex ${
+                  message.type === "user" ? "justify-end" : "justify-start"
+                }`}
               >
                 <div className={`chat-bubble ${message.type}`}>
                   <p>{message.text}</p>
@@ -183,7 +204,7 @@ const Chat = () => {
             placeholder="Type your health question..."
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
             className="flex-1"
           />
           <Button onClick={sendMessage} size="icon" className="shrink-0">
@@ -196,14 +217,18 @@ const Chat = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setInputMessage("What are the COVID-19 symptoms?")}
+            onClick={() =>
+              setInputMessage("What are the COVID-19 symptoms?")
+            }
           >
             COVID-19 Info
           </Button>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setInputMessage("When should I get vaccinated?")}
+            onClick={() =>
+              setInputMessage("When should I get vaccinated?")
+            }
           >
             Vaccination Schedule
           </Button>
