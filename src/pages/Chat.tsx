@@ -12,11 +12,8 @@ import { Navigation } from "@/components/Navigation";
 import { FloatingHealthIcons } from "@/components/FloatingHealthIcons";
 import { Send } from "lucide-react";
 
-// ✅ API URL setup
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (typeof window !== "undefined" ? "http://localhost:5000" : "");
-
+// ✅ Hardcoded API URL to deployed backend
+const API_URL = "https://backkkkkkk-aqkn.onrender.com";
 console.log("✅ Using API URL:", API_URL);
 
 const languages = [
@@ -59,10 +56,6 @@ const Chat = () => {
 
   const sendMessage = async () => {
     if (!inputMessage.trim()) return;
-    if (!API_URL) {
-      console.error("❌ No API_URL configured!");
-      return;
-    }
 
     const newMessage: Message = {
       id: Date.now().toString(),
@@ -217,18 +210,14 @@ const Chat = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() =>
-              setInputMessage("What are the COVID-19 symptoms?")
-            }
+            onClick={() => setInputMessage("What are the COVID-19 symptoms?")}
           >
             COVID-19 Info
           </Button>
           <Button
             variant="outline"
             size="sm"
-            onClick={() =>
-              setInputMessage("When should I get vaccinated?")
-            }
+            onClick={() => setInputMessage("When should I get vaccinated?")}
           >
             Vaccination Schedule
           </Button>
