@@ -12,9 +12,7 @@ import { Navigation } from "@/components/Navigation";
 import { FloatingHealthIcons } from "@/components/FloatingHealthIcons";
 import { Send } from "lucide-react";
 
-// ✅ Hardcoded API URL to deployed backend
 const API_URL = "https://backkkkkkk-aqkn.onrender.com";
-console.log("✅ Using API URL:", API_URL);
 
 const languages = [
   { code: "en", name: "English", native: "English" },
@@ -83,8 +81,6 @@ const Chat = () => {
       }
 
       const data = await response.json();
-      console.log("API response:", data);
-
       const botReplyText =
         data.reply?.parts?.[0]?.text?.trim() ||
         "Sorry, I couldn't process your request.";
@@ -228,6 +224,41 @@ const Chat = () => {
           >
             Disease Prevention
           </Button>
+        </div>
+
+        {/* Emergency Numbers */}
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold mb-2">🚨 Emergency Numbers</h2>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => (window.location.href = "tel:108")}
+            >
+              🚑 Ambulance (108)
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => (window.location.href = "tel:102")}
+            >
+              🏥 Medical Helpline (102)
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => (window.location.href = "tel:104")}
+            >
+              📞 Health Helpline (104)
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => (window.location.href = "tel:9439994859")}
+            >
+              🩺 Odisha Helpline (9439994859)
+            </Button>
+          </div>
         </div>
       </div>
     </div>
